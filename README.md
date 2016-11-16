@@ -30,6 +30,12 @@ __Canonical Operation Generation__
 
 TODO
 
+## Issues
+
+Issue tracking for alumbra is centralized at [alumbra/alumbra][issues].
+
+[issues]: https://github.com/alumbra/alumbra/issues
+
 ## License
 
 ```
