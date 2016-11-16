@@ -4,11 +4,31 @@ __alumbra.analyzer__ is a library transforming raw GraphQL ASTs into formats
 more suitable for validation or execution. It is based on the specs defined
 in [alumbra.spec][alumbra-spec].
 
+[![Build Status](https://travis-ci.org/alumbra/alumbra.analyzer.svg?branch=master)](https://travis-ci.org/alumbra/alumbra.analyzer)
+[![Clojars Project](https://img.shields.io/clojars/v/alumbra/analyzer.svg)](https://clojars.org/alumbra/analyzer)
+
 [alumbra-spec]: https://github.com/alumbra/alumbra.spec
 
 ## Usage
 
-Coming soon.
+```clojure
+(require '[alumbra.analyzer :as analyzer])
+```
+
+__Schema Analysis__
+
+Converts a value conforming to `:analyzer/schema` to `:analyzer/analyzed-schema`
+which can be used as a base for GraphQL query document validation.
+
+```clojure
+(analyzer/analyze-schema
+  (alumbra.parser/parse-schema
+    "type Person { ... } ..."))
+```
+
+__Canonical Operation Generation__
+
+TODO
 
 ## License
 
