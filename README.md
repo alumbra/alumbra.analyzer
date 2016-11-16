@@ -1,8 +1,8 @@
 # alumbra.analyzer
 
-__alumbra.analyzer__ is a library transforming raw GraphQL ASTs into formats
-more suitable for validation or execution. It is based on the specs defined
-in [alumbra.spec][alumbra-spec].
+This library contains means of transforming raw GraphQL ASTs into formats more
+suitable for validation or execution. It is based on the specs defined in
+[alumbra.spec][alumbra-spec].
 
 [![Build Status](https://travis-ci.org/alumbra/alumbra.analyzer.svg?branch=master)](https://travis-ci.org/alumbra/alumbra.analyzer)
 [![Clojars Project](https://img.shields.io/clojars/v/alumbra/analyzer.svg)](https://clojars.org/alumbra/analyzer)
