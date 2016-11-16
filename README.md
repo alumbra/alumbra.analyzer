@@ -28,7 +28,18 @@ which can be used as a base for GraphQL query document validation.
 
 __Canonical Operation Generation__
 
-TODO
+Based on an analyzed schema, a value conforming to `:analyzer/document` can
+be converted to `:analyzer/canonical-operation` which is a self-contained
+format suitable for execution.
+
+```clojure
+(analyzer/canonicalize-operation
+  analyzed-schema
+  (alumbra.parser/parse-document "{ me { name } }"))
+```
+
+Note that this operation assumes that the input document has been validated and
+is thus semantically sound.
 
 ## Issues
 

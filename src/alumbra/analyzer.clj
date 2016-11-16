@@ -7,7 +7,10 @@
              [schema-root :as schema-root]
              [types :as types]
              [unions :as unions]
-             [valid-fragment-spreads :as valid-fragment-spreads]]))
+             [valid-fragment-spreads :as valid-fragment-spreads]]
+            [alumbra.canonical
+             [fragments :refer [resolve-fragments]]
+             [operations :refer [resolve-operation]]]))
 
 (defn analyze-schema
   "Analyze a GraphQL schema conforming to `:alumbra/schema` to produce a
@@ -23,3 +26,17 @@
         (unions/analyze schema))
       (kinds/aggregate)
       (valid-fragment-spreads/aggregate)))
+
+(defn canonicalize-operation
+  "Canonicalize a validated GraphQL document based on the given analyzed
+   schema."
+  ([analyzed-schema document]
+   (canonicalize-operation analyzed-schema document nil {}))
+  ([analyzed-schema document operation-name]
+   (canonicalize-operation analyzed-schema document operation-name {}))
+  ([analyzed-schema document operation-name variables]
+   (let [{:keys [alumbra/fragments alumbra/operations]} document]
+     (-> {:schema    analyzed-schema
+          :variables variables}
+         (resolve-fragments fragments)
+         (resolve-operation operations operation-name)))))
