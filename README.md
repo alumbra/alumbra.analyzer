@@ -26,6 +26,9 @@ which can be used as a base for GraphQL query document validation.
     "type Person { ... } ..."))
 ```
 
+Note that this operation assumes that the input schema has been validated and
+is thus semantically sound.
+
 __Canonical Operation Generation__
 
 Based on an analyzed schema, a value conforming to `:analyzer/document` can
