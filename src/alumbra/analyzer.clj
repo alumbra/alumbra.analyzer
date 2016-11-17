@@ -27,6 +27,12 @@
       (kinds/aggregate)
       (valid-fragment-spreads/aggregate)))
 
+(defn merge-schemas
+  "Merge a series of analyzed (!) GraphQL schemas."
+  [schemas]
+  {:pre [(not-any? :alumbra/parser-errors schemas)]}
+  (apply merge-with into schemas))
+
 (defn canonicalize-operation
   "Canonicalize a validated GraphQL document based on the given analyzed
    schema."
