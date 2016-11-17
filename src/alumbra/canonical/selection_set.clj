@@ -77,6 +77,8 @@
 (defn- resolve-field*
   [opts field]
   (let [field-type (field-type-of opts field)]
+    (assert field-type
+            (str "field not in scope: " (:alumbra/field-name field)))
     (merge
       {:field-name (:alumbra/field-name field)
        :field-alias (field-alias field)}
@@ -96,6 +98,19 @@
 ;; Inline spreads are merged into the current selection set, adding a type
 ;; condition to each field.
 
+(defn- collect-possible-types
+  [{:keys [schema]} fragment-type-name]
+  (let [{:keys [type->kind]} schema
+        t (->> [(case (type->kind fragment-type-name)
+                  :type      :types
+                  :interface :interfaces
+                  :union     :unions)
+                fragment-type-name]
+               (get-in schema))]
+    (->> [:union-types :implemented-by]
+         (mapcat #(get t %))
+         (into #{fragment-type-name}))))
+
 (defn resolve-fragment-selection-set
   [opts {:keys [alumbra/type-condition
                 alumbra/selection-set
@@ -104,14 +119,14 @@
         selection-set (resolve-selection-set
                         (assoc opts :scope-type fragment-type-name)
                         selection-set)
-        possible-types #{fragment-type-name}]
+        possible-types (collect-possible-types opts fragment-type-name)]
     {:type-condition possible-types
      :selection-set  selection-set
      :directives     (resolve-directives opts directives)}))
 
 (defn- inline-fragment-if-in-scope
   [{:keys [scope-type]} {:keys [type-condition] :as fragment-data}]
-  (if (= scope-type (:type-condition fragment-data))
+  (if (contains? type-condition scope-type)
     (dissoc fragment-data :type-condition)
     fragment-data))
 

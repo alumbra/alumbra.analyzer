@@ -3,6 +3,7 @@
              [clojure-test :refer [defspec]]
              [generators :as gen]
              [properties :as prop]]
+            [clojure.test :refer :all]
             [alumbra.parser :as ql]
             [alumbra.analyzer :as analyzer]
             [alumbra.generators
@@ -21,7 +22,8 @@
      interface Pet { id:ID!, name:String! }
      type Cat implements Pet { id:ID!, name:String!, meows: Boolean }
      type Dog implements Pet { id:ID!, name:String!, barks: Boolean }
-     type QueryRoot { pet(name: String!): Pet, me: Person! }
+     union CatOrDog = Cat | Dog
+     type QueryRoot { pet(name: String!): Pet, me: Person!, randomCat: Cat }
      schema { query: QueryRoot }"))
 
 ;; ## Generators
@@ -118,3 +120,55 @@
     (let [ast (ql/parse-document document)]
       (s/valid? :alumbra/canonical-operation
                 (analyzer/canonicalize-operation schema ast)))))
+
+(deftest t-canonicalizer-fragment-inlining
+  (let [canonicalize (comp #(analyzer/canonicalize-operation schema %)
+                           ql/parse-document)
+        inspect (fn [level v]
+                  (nth (iterate #(first (:selection-set %)) v) level))]
+    (testing "inline fragments"
+      (testing "non-inlineable fragment."
+        (let [block (->> (canonicalize
+                           "{ pet (name:\"x\") { ... on Cat { name } } }")
+                         (inspect 2))]
+          (is (:type-condition block))))
+      (testing "exact fragment type match."
+        (let [block (->> (canonicalize
+                           "{ randomCat { ... on Cat { name } } }")
+                         (inspect 2))]
+          (is (not (:type-condition block)))))
+      (testing "fragment interface type match."
+        (let [block (->> (canonicalize
+                           "{ randomCat { ... on Pet { name } } }")
+                         (inspect 2))]
+          (is (not (:type-condition block)))))
+      (testing "fragment union type match."
+        (let [block (->> (canonicalize
+                           "{ randomCat { ... on CatOrDog { __typename } } }")
+                         (inspect 2))]
+          (is (not (:type-condition block))))))
+    (testing "named fragments"
+      (testing "non-inlineable fragment."
+        (let [block (->> (canonicalize
+                           "{ pet (name:\"x\") { ... X } }
+                            fragment X on Cat { name }")
+                         (inspect 2))]
+          (is (:type-condition block))))
+      (testing "exact fragment type match."
+        (let [block (->> (canonicalize
+                           "{ randomCat { ... X } }
+                            fragment X on Cat { name }")
+                         (inspect 2))]
+          (is (not (:type-condition block)))))
+      (testing "fragment interface type match."
+        (let [block (->> (canonicalize
+                           "{ randomCat { ... X } }
+                            fragment X on Pet { name }")
+                         (inspect 2))]
+          (is (not (:type-condition block)))))
+      (testing "fragment union type match."
+        (let [block (->> (canonicalize
+                           "{ randomCat { ... X } }
+                            fragment X on CatOrDog { __typename }")
+                         (inspect 2))]
+          (is (not (:type-condition block))))))))
