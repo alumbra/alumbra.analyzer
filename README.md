@@ -19,12 +19,14 @@ or execution. It is based on the specs defined in [alumbra.spec][alumbra-spec].
 __Schema Analysis__
 
 Converts a value conforming to `:analyzer/schema` to `:analyzer/analyzed-schema`
-which can be used as a base for GraphQL query document validation.
+which can be used as a base for GraphQL query document validation. This
+operation needs to have a parser injected, since internally it will merge
+the GraphQL introspection schema into the given one.
 
 ```clojure
 (analyzer/analyze-schema
-  (alumbra.parser/parse-schema
-    "type Person { ... } ..."))
+  alumbra.parser/parse-schema
+  "type Person { ... } ...")
 ```
 
 Note that this operation assumes that the input schema has been validated and
