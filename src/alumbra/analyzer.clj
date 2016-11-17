@@ -12,7 +12,9 @@
              [fragments :refer [resolve-fragments]]
              [operations :refer [resolve-operation]]]))
 
-(defn analyze-schema
+;; ## Base Functionality
+
+(defn analyze-schema-ast
   "Analyze a GraphQL schema conforming to `:alumbra/schema` to produce a
    more compact representation conforming to `:alumbra/analyzed-schema`."
   [schema]
@@ -29,9 +31,9 @@
 
 (defn merge-schemas
   "Merge a series of analyzed (!) GraphQL schemas."
-  [schemas]
-  {:pre [(not-any? :alumbra/parser-errors schemas)]}
-  (apply merge-with into schemas))
+  [analyzed-schemas]
+  {:pre [(not-any? :alumbra/parser-errors analyzed-schemas)]}
+  (apply merge-with into analyzed-schemas))
 
 (defn canonicalize-operation
   "Canonicalize a validated GraphQL document based on the given analyzed
@@ -46,3 +48,40 @@
           :variables variables}
          (resolve-fragments fragments)
          (resolve-operation operations operation-name)))))
+
+;; ## Protocol
+
+(defprotocol IReadable
+  "Protocol for values that can be converted to strings."
+  (as-string [schema]
+    "Convert the given GraphQL schema/document to its string representation."))
+
+(extend-protocol IReadable
+  String
+  (as-string [s]
+    s)
+
+  java.net.URL
+  (as-string [uri]
+    (slurp uri))
+
+  java.net.URI
+  (as-string [uri]
+    (slurp uri))
+
+  java.io.File
+  (as-string [f]
+    (slurp f))
+
+  java.io.InputStream
+  (as-string [in]
+    (slurp in)))
+
+(defn analyze-schemas
+  "Given a series of schemas (implementing `IReadable`), as well as a
+   parser function, generate a combined analyzed schema."
+  [parser-fn schemas]
+  (->> (map as-string schemas)
+       (map parser-fn)
+       (map analyze-schema-ast)
+       (merge-schemas)))
