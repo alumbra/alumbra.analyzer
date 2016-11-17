@@ -16,13 +16,13 @@
 
 (def schema
   (analyzer/analyze-schema
-    (ql/parse-schema
-      "type Person { id:ID!, name:String!, pet: Pet }
-       interface Pet { id:ID!, name:String! }
-       type Cat implements Pet { id:ID!, name:String!, meows: Boolean }
-       type Dog implements Pet { id:ID!, name:String!, barks: Boolean }
-       type QueryRoot { pet(name: String!): Pet, me: Person! }
-       schema { query: QueryRoot }")))
+    ql/parse-schema
+    "type Person { id:ID!, name:String!, pet: Pet }
+     interface Pet { id:ID!, name:String! }
+     type Cat implements Pet { id:ID!, name:String!, meows: Boolean }
+     type Dog implements Pet { id:ID!, name:String!, barks: Boolean }
+     type QueryRoot { pet(name: String!): Pet, me: Person! }
+     schema { query: QueryRoot }"))
 
 ;; ## Generators
 
@@ -81,18 +81,34 @@
      "name" gen-directives
      "pet"  gen-pet-selection-set}))
 
+(defn gen-type-selection-set
+  []
+  (gen-selection-set
+    {"kind"        nil
+     "name"        nil
+     "description" nil
+     "possibleTypes" #(gen/one-of
+                        [(gen-type-selection-set)
+                         (gen/return "{name}")])}))
+
+(defn gen-schema-selection-set
+  []
+  (gen-selection-set
+    {"types" gen-type-selection-set}))
+
 (defn gen-query-root-selection-set
   []
   (gen-selection-set
-    {"pet" (let [g (gen-pet-selection-set)]
-             (constantly
-               (gen/let [n -name
-                         d (gen-directives)
-                         s g]
-                 (str "(name: \"" n "\") "
-                      (some-> d (str " "))
-                      s))))
-     "me"  gen-person-selection-set}))
+    {"pet"      (let [g (gen-pet-selection-set)]
+                  (constantly
+                    (gen/let [n -name
+                              d (gen-directives)
+                              s g]
+                      (str "(name: \"" n "\") "
+                           (some-> d (str " "))
+                           s))))
+     "me"       gen-person-selection-set
+     "__schema" gen-schema-selection-set}))
 
 ;; ## Tests
 

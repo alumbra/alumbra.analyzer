@@ -11,7 +11,6 @@
 (defspec t-analyzer-conforms-to-spec 500
   (prop/for-all
     [schema g/-schema]
-    (let [ast (ql/parse-schema schema)]
-      (or (:alumbra/parser-errors ast)
-          (s/valid? :alumbra/analyzed-schema
-                    (analyzer/analyze-schema ast))))))
+    (let [analyzed-schema (analyzer/analyze-schema ql/parse-schema schema)]
+      (or (:alumbra/parser-errors analyzed-schema)
+          (s/valid? :alumbra/analyzed-schema analyzed-schema)))))
