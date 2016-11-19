@@ -47,12 +47,6 @@ format suitable for execution.
 Note that this operation assumes that the input document has been validated and
 is thus semantically sound.
 
-## Issues
-
-Issue tracking for alumbra is centralized at [alumbra/alumbra][issues].
-
-[issues]: https://github.com/alumbra/alumbra/issues
-
 ## License
 
 ```
