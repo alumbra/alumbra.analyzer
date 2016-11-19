@@ -8,8 +8,16 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha14" :scope "provided"]
                  [com.stuartsierra/dependency "0.2.0"]
                  [com.rpl/specter "0.13.1"]]
-  :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]
-                                  [alumbra/spec "0.1.0-SNAPSHOT"]
-                                  [alumbra/parser "0.1.0-SNAPSHOT"]
-                                  [alumbra/generators "0.1.1"]]}}
+  :profiles {:dev
+             {:dependencies [[org.clojure/test.check "0.9.0"]
+                             [alumbra/spec "0.1.0-SNAPSHOT"]
+                             [alumbra/parser "0.1.0-SNAPSHOT"]
+                             [alumbra/generators "0.1.1"]]}
+             :codox
+             {:plugins [[lein-codox "0.10.0"]]
+              :dependencies [[codox-theme-rdash "0.1.1"]]
+              :codox {:project {:name "alumbra.analyzer"}
+                      :metadata {:doc/format :markdown}
+                      :themes [:rdash]
+                      :source-uri "https://github.com/alumbra/alumbra.analyzer/blob/v{version}/{filepath}#L{line}"}}}
   :pedantic? :abort)
