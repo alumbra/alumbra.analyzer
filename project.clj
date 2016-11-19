@@ -20,4 +20,5 @@
                       :metadata {:doc/format :markdown}
                       :themes [:rdash]
                       :source-uri "https://github.com/alumbra/alumbra.analyzer/blob/v{version}/{filepath}#L{line}"}}}
+  :aliases {"codox" ["with-profile" "+codox" "codox"]}
   :pedantic? :abort)
