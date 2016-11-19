@@ -19,54 +19,72 @@
   "Analyze a GraphQL schema conforming to `:alumbra/schema` to produce a
    more compact representation conforming to `:alumbra/analyzed-schema`."
   [schema]
-  {:pre [(not (:alumbra/parser-errors schema))]}
-  (-> (merge
-        (directives/analyze schema)
-        (enums/analyze schema)
-        (scalars/analyze schema)
-        (schema-root/analyze schema)
-        (types/analyze schema)
-        (unions/analyze schema))
-      (kinds/aggregate)
-      (valid-fragment-spreads/aggregate)))
+  (if-not (:alumbra/parser-errors schema)
+    (-> (merge
+          (directives/analyze schema)
+          (enums/analyze schema)
+          (scalars/analyze schema)
+          (schema-root/analyze schema)
+          (types/analyze schema)
+          (unions/analyze schema))
+        (kinds/aggregate)
+        (valid-fragment-spreads/aggregate))
+    schema))
 
 (defn- merge-schemas
   "Merge a series of analyzed (!) GraphQL schemas."
   [analyzed-schemas]
-  {:pre [(not-any? :alumbra/parser-errors analyzed-schemas)]}
-  (apply merge-with into analyzed-schemas))
+  (let [errors (mapcat :alumbra/parser-errors analyzed-schemas)]
+    (if (seq errors)
+      {:alumbra/parser-errors errors}
+      (apply merge-with into analyzed-schemas))))
 
 ;; ## Protocol
 
-(defprotocol IReadable
-  "Protocol for values that can be converted to strings."
-  (as-strings [schema]
-    "Convert the given GraphQL schema/document to its string representation."))
+(defprotocol Schema
+  "Protocol for representations of GraphQL schemas."
+  (analyze-schema* [schema parser-fn]
+    "Convert the given GraphQL schema representation to a value conforming
+     to `:alumbra/analyzed-schema`.
 
-(extend-protocol IReadable
+     Use [[analyze-schema]] to produce a self-contained schema, including base
+     types, directives and introspection capabilities."))
+
+(extend-protocol Schema
   String
-  (as-strings [s]
-    [s])
+  (analyze-schema* [s parser-fn]
+    (analyze-schema-ast
+      (parser-fn s)))
+
+  clojure.lang.IPersistentMap
+  (analyze-schema* [m _]
+    (if (contains? m :type->kind)
+      m
+      (analyze-schema-ast m)))
 
   java.net.URL
-  (as-strings [uri]
-    [(slurp uri)])
+  (analyze-schema* [url parser-fn]
+    (analyze-schema* (slurp url) parser-fn))
 
   java.net.URI
-  (as-strings [uri]
-    [(slurp uri)])
+  (analyze-schema* [uri parser-fn]
+    (analyze-schema* (slurp uri) parser-fn))
 
   java.io.File
-  (as-strings [f]
-    [(slurp f)])
+  (analyze-schema* [f parser-fn]
+    (analyze-schema* (slurp f) parser-fn))
 
   java.io.InputStream
-  (as-strings [in]
-    [(slurp in)])
+  (analyze-schema* [in parser-fn]
+    (analyze-schema* (slurp in) parser-fn))
 
   clojure.lang.Sequential
-  (as-strings [sq]
-    (mapcat as-strings sq)))
+  (analyze-schema* [sq parser-fn]
+    (merge-schemas
+      (keep
+        #(when %
+           (analyze-schema* % parser-fn))
+        sq))))
 
 ;; ## Introspection
 
@@ -76,8 +94,7 @@
          __schema: __Schema!
          __type(name: String!): __Type
        }"
-      (parser-fn)
-      (analyze-schema-ast)
+      (analyze-schema* parser-fn)
       (get-in [:types "__Introspection" :fields])
       (dissoc "__typename")))
 
@@ -99,25 +116,33 @@
 ;; ## Public API
 
 (defn analyze-schema
-  "Given a schema (implementing `IReadable`), as well as a
-   parser function, generate a value conforming to `:alumbra/analyzed-schema`.
+  "Given a schema (implementing `IReadable`), as well as a parser function,
+   generate a value conforming to `:alumbra/analyzed-schema`.
 
-   This will already include the GraphQL introspection schema."
-  [parser-fn schema
-   & [{:keys [introspection-schema]
-       :or {introspection-schema
-            (io/resource "alumbra/GraphQLIntrospection.graphql")}}]]
-  (let [asts (map parser-fn (as-strings [introspection-schema schema]))
-        errors (mapcat :alumbra/parser-errors asts)]
-    (if (seq errors)
-      {:alumbra/parser-errors errors}
-      (->> (map analyze-schema-ast asts)
-           (merge-schemas)
-           (add-introspection-queries parser-fn)))))
+   ```clojure
+   (analyze-schema
+     \"type Person { name: String! }
+      schema { query: Person }\"
+     alumbra.parser/parse-schema)
+   ```
+
+   By default, base and introspection schemas bundled with this library will
+   be used. You can exclude them by explicitly supplying `nil` and replace
+   them by passing a `Schema` value."
+  ([schema parser-fn]
+   (analyze-schema schema parser-fn {}))
+  ([schema parser-fn {:keys [base-schema introspection-schema]}]
+   (let [base-schema  (or base-schema
+                          (io/resource "alumbra/GraphQLBase.graphql"))
+         intro-schema (or introspection-schema
+                          (io/resource "alumbra/GraphQLIntrospection.graphql"))
+         result (analyze-schema* [base-schema intro-schema schema] parser-fn)]
+     (if-not (:alumbra/parser-errors result)
+       (add-introspection-queries parser-fn result)
+       result))))
 
 (defn canonicalize-operation
-  "Canonicalize a validated GraphQL document based on the given analyzed
-   schema."
+  "Canonicalize a validated GraphQL document based on the given schema."
   ([analyzed-schema document]
    (canonicalize-operation analyzed-schema document nil {}))
   ([analyzed-schema document operation-name]

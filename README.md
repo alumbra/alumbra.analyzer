@@ -12,6 +12,8 @@ or execution. It is based on the specs defined in [alumbra.spec][alumbra-spec].
 
 ## Usage
 
+__[Documentation](https://alumbra.github.io/alumbra.analyzer)__
+
 ```clojure
 (require '[alumbra.analyzer :as analyzer])
 ```
@@ -25,8 +27,8 @@ the GraphQL introspection schema into the given one.
 
 ```clojure
 (analyzer/analyze-schema
-  alumbra.parser/parse-schema
-  "type Person { ... } ...")
+  "type Person { ... } ..."
+  alumbra.parser/parse-schema)
 ```
 
 Note that this operation assumes that the input schema has been validated and

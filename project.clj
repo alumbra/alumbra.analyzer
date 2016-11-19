@@ -19,6 +19,7 @@
               :codox {:project {:name "alumbra.analyzer"}
                       :metadata {:doc/format :markdown}
                       :themes [:rdash]
-                      :source-uri "https://github.com/alumbra/alumbra.analyzer/blob/v{version}/{filepath}#L{line}"}}}
+                      :source-uri "https://github.com/alumbra/alumbra.analyzer/blob/v{version}/{filepath}#L{line}"
+                      :namespaces [alumbra.analyzer]}}}
   :aliases {"codox" ["with-profile" "+codox" "codox"]}
   :pedantic? :abort)

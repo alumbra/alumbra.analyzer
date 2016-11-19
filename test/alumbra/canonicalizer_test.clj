@@ -17,14 +17,14 @@
 
 (def schema
   (analyzer/analyze-schema
-    ql/parse-schema
     "type Person { id:ID!, name:String!, pet: Pet }
      interface Pet { id:ID!, name:String! }
      type Cat implements Pet { id:ID!, name:String!, meows: Boolean }
      type Dog implements Pet { id:ID!, name:String!, barks: Boolean }
      union CatOrDog = Cat | Dog
      type QueryRoot { pet(name: String!): Pet, me: Person!, randomCat: Cat }
-     schema { query: QueryRoot }"))
+     schema { query: QueryRoot }"
+    ql/parse-schema))
 
 ;; ## Generators
 

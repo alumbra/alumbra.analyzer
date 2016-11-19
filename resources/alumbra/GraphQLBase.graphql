@@ -1,0 +1,10 @@
+# Scalars
+scalar Boolean
+scalar Float
+scalar ID
+scalar Int
+scalar String
+
+# Directives
+directive @skip (if: Boolean!) on FIELD
+directive @include (if: Boolean!) on FIELD
