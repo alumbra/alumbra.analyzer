@@ -26,6 +26,21 @@
      schema { query: QueryRoot }"
     ql/parse-schema))
 
+;; ## Helper
+
+(defn shape-of
+  [{:keys [field-alias selection-set type-condition]}]
+  (if selection-set
+    (cond->> (mapcat shape-of selection-set)
+      type-condition (cons type-condition)
+      field-alias (list field-alias))
+    [field-alias]))
+
+(def canonicalize-shape
+  (comp shape-of
+        #(analyzer/canonicalize-operation schema %)
+        ql/parse-document))
+
 ;; ## Generators
 
 (defn gen-directives
@@ -122,53 +137,35 @@
                 (analyzer/canonicalize-operation schema ast)))))
 
 (deftest t-canonicalizer-fragment-inlining
-  (let [canonicalize (comp #(analyzer/canonicalize-operation schema %)
-                           ql/parse-document)
-        inspect (fn [level v]
-                  (nth (iterate #(first (:selection-set %)) v) level))]
-    (testing "inline fragments"
-      (testing "non-inlineable fragment."
-        (let [block (->> (canonicalize
-                           "{ pet (name:\"x\") { ... on Cat { name } } }")
-                         (inspect 2))]
-          (is (:type-condition block))))
-      (testing "exact fragment type match."
-        (let [block (->> (canonicalize
-                           "{ randomCat { ... on Cat { name } } }")
-                         (inspect 2))]
-          (is (not (:type-condition block)))))
-      (testing "fragment interface type match."
-        (let [block (->> (canonicalize
-                           "{ randomCat { ... on Pet { name } } }")
-                         (inspect 2))]
-          (is (not (:type-condition block)))))
-      (testing "fragment union type match."
-        (let [block (->> (canonicalize
-                           "{ randomCat { ... on CatOrDog { __typename } } }")
-                         (inspect 2))]
-          (is (not (:type-condition block))))))
-    (testing "named fragments"
-      (testing "non-inlineable fragment."
-        (let [block (->> (canonicalize
-                           "{ pet (name:\"x\") { ... X } }
-                            fragment X on Cat { name }")
-                         (inspect 2))]
-          (is (:type-condition block))))
-      (testing "exact fragment type match."
-        (let [block (->> (canonicalize
-                           "{ randomCat { ... X } }
-                            fragment X on Cat { name }")
-                         (inspect 2))]
-          (is (not (:type-condition block)))))
-      (testing "fragment interface type match."
-        (let [block (->> (canonicalize
-                           "{ randomCat { ... X } }
-                            fragment X on Pet { name }")
-                         (inspect 2))]
-          (is (not (:type-condition block)))))
-      (testing "fragment union type match."
-        (let [block (->> (canonicalize
-                           "{ randomCat { ... X } }
-                            fragment X on CatOrDog { __typename }")
-                         (inspect 2))]
-          (is (not (:type-condition block))))))))
+  (are [expected-shape query] (= expected-shape (canonicalize-shape query))
+       ;; non-inlineable fragments
+       '("pet" (#{"Cat"} "name"))
+       "{ pet (name:\"x\") { ... on Cat { name } } }"
+
+       '("pet" (#{"Cat"} "name"))
+       "{ pet (name:\"x\") { ... X } }
+        fragment X on Cat { name }"
+
+       ;; exact fragment type match
+       '("randomCat" ("name"))
+       "{ randomCat { ... on Cat { name } } }"
+
+       '("randomCat" ("name"))
+       "{ randomCat { ... X } }
+        fragment X on Cat { name }"
+
+       ;; interface fragment type match
+       '("randomCat" ("name"))
+       "{ randomCat { ... on Pet { name } } }"
+
+       '("randomCat" ("name"))
+       "{ randomCat { ... X } }
+        fragment X on Pet { name }"
+
+       ;; union fragment type match
+       '("randomCat" ("__typename"))
+       "{ randomCat { ... on CatOrDog { __typename } } }"
+
+       '("randomCat" ("__typename"))
+       "{ randomCat { ... X } }
+        fragment X on CatOrDog { __typename }"))
