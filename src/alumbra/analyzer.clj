@@ -153,3 +153,9 @@
           :variables variables}
          (resolve-fragments fragments)
          (resolve-operation operations operation-name)))))
+
+(defn canonicalizer
+  "Create a function canonicalizing GraphQL documents conforming to
+   `:alumbra/document` based on the given schema. "
+  [analyzed-schema]
+  (partial canonicalize-operation analyzed-schema))
