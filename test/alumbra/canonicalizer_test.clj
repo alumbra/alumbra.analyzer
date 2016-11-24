@@ -168,4 +168,12 @@
 
        '("randomCat" ("__typename"))
        "{ randomCat { ... X } }
-        fragment X on CatOrDog { __typename }"))
+        fragment X on CatOrDog { __typename }"
+
+       ;; nested inlineable fragments
+       '("randomCat" ("name"))
+       "{ randomCat { ... on Cat { ... on Pet { name } } } }"
+
+       '("randomCat" ("name"))
+       "{ randomCat { ... on Cat { ... X } } }
+        fragment X on Pet { name }"))
