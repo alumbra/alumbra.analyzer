@@ -6,5 +6,11 @@ scalar Int
 scalar String
 
 # Directives
-directive @skip (if: Boolean!) on FIELD
-directive @include (if: Boolean!) on FIELD
+directive @skip (if: Boolean!)
+on FIELD, INLINE_FRAGMENT, FRAGMENT_SPREAD
+
+directive @include (if: Boolean!)
+on FIELD, INLINE_FRAGMENT, FRAGMENT_SPREAD
+
+directive @deprecated (reason: String)
+on FIELD_DEFINITION, ENUM_VALUE
