@@ -40,10 +40,10 @@
         selection (resolve-selection-set
                     (assoc opts :scope-type root-type)
                     selection-set)]
-     (cond-> {:operation-type operation-type
-              :selection-set  selection
-              :directives     (resolve-directives opts directives)}
-       operation-name (assoc :operation-name operation-name))))
+    {:operation-name operation-name
+     :operation-type operation-type
+     :selection-set  selection
+     :directives     (resolve-directives opts directives)}))
 
 (defn resolve-operation
   [opts operations operation-name]
