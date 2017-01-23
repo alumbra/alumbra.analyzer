@@ -118,10 +118,8 @@
    - type definitions,
    - type extensions,
    - input type definitions."
-  [schema]
-  (-> {:types       {}
-       :input-types {}
-       :interfaces  {}}
+  [base-schema schema]
+  (-> base-schema
       (add-interfaces schema)
       (add-types schema)
       (extend-types schema)

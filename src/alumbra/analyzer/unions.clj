@@ -8,23 +8,23 @@
 (defn analyze
   "Analyze union definitions in a GraphQL schema conforming to
    `:alumbra/schema`."
-  [{:keys [alumbra/union-definitions]}]
-  {:unions
-   (->> union-definitions
-        (traverse
-          [ALL
-           (collect-one)
-           :alumbra/union-types
-           ALL
-           :alumbra/type-name])
-        (reduce
-          (fn [result [{:keys [alumbra/type-name] :as x} union-type-name]]
-            (update result
-                    type-name
-                    (fnil
-                      #(update % :union-types conj union-type-name)
-                      {:type-name   type-name
-                       :fields      (default-type-fields type-name)
-                       :inline-directives (read-inline-directives x)
-                       :union-types #{}})))
-          {}))})
+  [base-schema {:keys [alumbra/union-definitions]}]
+  (->> union-definitions
+       (traverse
+         [ALL
+          (collect-one)
+          :alumbra/union-types
+          ALL
+          :alumbra/type-name])
+       (reduce
+         (fn [result [{:keys [alumbra/type-name] :as x} union-type-name]]
+           (update result
+                   type-name
+                   (fnil
+                     #(update % :union-types conj union-type-name)
+                     {:type-name   type-name
+                      :fields      (default-type-fields type-name)
+                      :inline-directives (read-inline-directives x)
+                      :union-types #{}})))
+         {})
+       (update base-schema :unions (fnil into {}))))
