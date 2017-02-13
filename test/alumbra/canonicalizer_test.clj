@@ -98,3 +98,19 @@
        '("randomCat" ("name"))
        "{ randomCat { ... on Cat { ... X } } }
         fragment X on Pet { name }"))
+
+(deftest t-variables
+  (letfn [(canonicalize [query & [variables]]
+            (let [ast (ql/parse-document query)]
+              (if variables
+                (analyzer/canonicalize-operation schema ast nil variables)
+                (analyzer/canonicalize-operation schema ast))))]
+    (is (= (canonicalize
+             "{ randomCat(q: {emotions: [HAPPY HAPPIER]}) { name } }")
+           (canonicalize
+             "query ($q: CatQuery!) { randomCat(q: $q) { name } }"
+             {"q" {"emotions" ["HAPPY" "HAPPIER"]}})
+           (canonicalize
+             "query ($q: CatQuery = {emotions: [HAPPY HAPPIER]}) {
+                randomCat(q: $q) { name }
+              }")))))

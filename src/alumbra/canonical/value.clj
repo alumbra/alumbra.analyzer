@@ -17,15 +17,11 @@
 
 (defn- resolve-variable
   [{:keys [variables]} {:keys [alumbra/variable-name]}]
-  (cond (contains? variables variable-name)
-        (get variables variable-name)
-
-        ;; TODO: check default value
-
-        :else
-        (throw
-          (IllegalStateException.
-            (str "variable missing: $" variable-name)))))
+  (if (contains? variables variable-name)
+    (get variables variable-name)
+    (throw
+      (IllegalStateException.
+        (str "variable missing: $" variable-name)))))
 
 ;; ## Scalar
 

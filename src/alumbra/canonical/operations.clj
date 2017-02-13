@@ -1,8 +1,8 @@
 (ns alumbra.canonical.operations
-  (:require [alumbra.canonical.selection-set
-             :refer [resolve-selection-set]]
-            [alumbra.canonical.directives
-             :refer [resolve-directives]]))
+  (:require [alumbra.canonical
+             [selection-set :refer [resolve-selection-set]]
+             [directives :refer [resolve-directives]]
+             [variables :refer [resolve-variables]]]))
 
 ;; ## Helpers
 
@@ -36,10 +36,10 @@
                 alumbra/directives
                 alumbra/operation-type
                 alumbra/operation-name] :as op}]
-  (let [root-type (root-type opts op)
-        selection (resolve-selection-set
-                    (assoc opts :scope-type root-type)
-                    selection-set)]
+  (let [opts (-> opts
+                 (assoc :scope-type (root-type opts op))
+                 (resolve-variables op))
+        selection (resolve-selection-set opts selection-set)]
     {:operation-name operation-name
      :operation-type operation-type
      :selection-set  selection
