@@ -1,4 +1,4 @@
-(defproject alumbra/analyzer "0.1.6"
+(defproject alumbra/analyzer "0.1.7-SNAPSHOT"
   :description "GraphQL Schema/Operation Transformations"
   :url "https://github.com/alumbra/alumbra.analyzer"
   :license {:name "MIT License"
