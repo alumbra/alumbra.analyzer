@@ -6,7 +6,7 @@
             :year 2016
             :key "mit"}
   :dependencies [[org.clojure/clojure "1.9.0-alpha14" :scope "provided"]
-                 [alumbra/spec "0.1.5" :scope "provided"]
+                 [alumbra/spec "0.1.6" :scope "provided"]
                  [com.stuartsierra/dependency "0.2.0"]
                  [com.rpl/specter "0.13.1"]]
   :profiles {:dev

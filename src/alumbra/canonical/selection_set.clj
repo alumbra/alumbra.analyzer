@@ -57,8 +57,11 @@
   (generate-nested-leaf type-description))
 
 (defn- data-for-arguments
-  [opts _ {:keys [alumbra/arguments]}]
-  {:arguments (resolve-arguments opts arguments)})
+  [opts field-type {:keys [alumbra/arguments] :as x}]
+  {:arguments (resolve-arguments
+                opts
+                (:arguments field-type)
+                arguments)})
 
 (defn- data-for-directives
   [opts _ {:keys [alumbra/directives]}]

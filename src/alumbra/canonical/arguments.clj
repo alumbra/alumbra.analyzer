@@ -2,8 +2,9 @@
   (:require [alumbra.canonical.value :refer [resolve-value]]))
 
 (defn resolve-arguments
-  [opts arguments]
+  [opts argument-types arguments]
   (->> (for [{:keys [alumbra/argument-name
-                     alumbra/argument-value]} arguments]
-         [argument-name (resolve-value opts argument-value)])
+                     alumbra/argument-value]} arguments
+             :let [argument-type (get argument-types argument-name)]]
+         [argument-name (resolve-value opts argument-type argument-value)])
        (into {})))
