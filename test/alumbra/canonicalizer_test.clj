@@ -113,4 +113,14 @@
            (canonicalize
              "query ($q: CatQuery = {emotions: [HAPPY HAPPIER]}) {
                 randomCat(q: $q) { name }
-              }")))))
+              }")))
+    (is (= (canonicalize
+             "{ randomCat(q: null) { name } }")
+           (canonicalize
+             "query ($q: CatQuery) { randomCat(q: $q) { name } }"
+             {"q" nil})
+           (canonicalize
+             "query ($q: CatQuery = {emotions: [HAPPY HAPPIER]}) {
+              randomCat(q: $q) { name }
+              }"
+             {"q" nil})))))

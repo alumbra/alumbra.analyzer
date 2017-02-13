@@ -5,6 +5,6 @@
   [opts argument-types arguments]
   (->> (for [{:keys [alumbra/argument-name
                      alumbra/argument-value]} arguments
-             :let [argument-type (get argument-types argument-name)]]
-         [argument-name (resolve-value opts argument-type argument-value)])
+             :let [{:keys [type-description]} (get argument-types argument-name)]]
+         [argument-name (resolve-value opts type-description argument-value)])
        (into {})))

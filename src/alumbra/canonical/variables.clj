@@ -16,11 +16,14 @@
 
 (defmacro ^:private assert-type
   [predicate expected-type value]
-  `(assert ~predicate
-           (format
-             "value does not match expected type '%s': %s"
-             (type-shorthand ~expected-type)
-             ~value)))
+  `(let [v# ~value
+         t# ~expected-type]
+     (assert (or (and (nil? v#) (not (:non-null? t#)))
+                 ~predicate)
+             (format
+               "value does not match expected type '%s': %s"
+               (type-shorthand t#)
+               v#))))
 
 ;; ## Resolution
 ;;
@@ -38,13 +41,14 @@
    {:keys [type-name non-null?] :as type}
    value]
   (assert-type (map? value) type value)
-  (let [fields (get-in schema [:input-types type-name :fields])]
-    (->> (for [[field-name field-value] value
-               :let [{:keys [type-description]} (get fields field-name)]
-               :when type-description]
-           [field-name
-            (resolve-variable-value opts type-description field-value)])
-         (into {}))))
+  (when value
+    (let [fields (get-in schema [:input-types type-name :fields])]
+      (->> (for [[field-name field-value] value
+                 :let [{:keys [type-description]} (get fields field-name)]
+                 :when type-description]
+             [field-name
+              (resolve-variable-value opts type-description field-value)])
+           (into {})))))
 
 (defn- resolve-named-type
   [{:keys [schema] :as opts}
@@ -56,12 +60,13 @@
       :input-type     (resolve-input-type opts type value))))
 
 (defn- resolve-list-type
-  [opts {:keys [type-description]} value]
+  [opts {:keys [non-null? type-description]} value]
   (assert-type (sequential? value) type-description value)
-  (mapv #(resolve-variable-value opts type-description %) value))
+  (some->> value
+           (mapv #(resolve-variable-value opts type-description %))))
 
 (defn- resolve-variable-value
-  [opts {:keys [type-name] :as type} value]
+  [opts {:keys [type-name non-null?] :as type} value]
   (if type-name
     (resolve-named-type opts type value)
     (resolve-list-type opts type value)))
@@ -71,18 +76,19 @@
    {:keys [alumbra/variable-name
            alumbra/default-value
            alumbra/type]}]
-  (let [v    (get variables variable-name ::none)
+  (let [v (get variables variable-name ::none)
         type (as-type-description type)]
     (if (= v ::none)
       (if default-value
-        (resolve-value opts type default-value))
+        (resolve-value opts type default-value)
+        ::none)
       (resolve-variable-value opts type v))))
 
 (defn resolve-variables
   [opts {:keys [alumbra/variables]}]
   (->> (for [{:keys [alumbra/variable-name] :as variable} variables
              :let [variable-value (resolve-variable opts variable)]
-             :when variable-value]
+             :when (not= variable-value ::none)]
          [variable-name variable-value])
        (into {})
        (assoc opts :variables)))
