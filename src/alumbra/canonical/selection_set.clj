@@ -12,13 +12,35 @@
            alumbra/field-name]}]
   (or field-alias field-name))
 
+(defn- throw-unknown-type!
+  [scope-type]
+  (throw
+    (IllegalArgumentException.
+      (format "unknown type: %s"
+              scope-type))))
+
+(defn- throw-illegal-type!
+  [scope-type]
+  (throw
+    (IllegalArgumentException.
+      (format "not an OBJECT, INTERFACE or UNION type: %s"
+              scope-type))))
+
+(defn- set-scope-type
+  [{:keys [schema] :as opts} scope-type]
+  (when-not (get-in schema [:type->kind scope-type])
+    (throw-unknown-type! scope-type))
+  (assoc opts :scope-type scope-type))
+
 (defn- field-type-of
   [{:keys [schema scope-type]} {:keys [alumbra/field-name]}]
   (let [kind (get-in schema [:type->kind scope-type])
         type (case kind
                :type      (get-in schema [:types scope-type])
                :interface (get-in schema [:interfaces scope-type])
-               :union     (get-in schema [:unions scope-type]))]
+               :union     (get-in schema [:unions scope-type])
+               nil        (throw-unknown-type! scope-type)
+               (throw-illegal-type! scope-type kind))]
     (get-in type [:fields field-name])))
 
 (defn- generate-nested-selection
@@ -73,7 +95,7 @@
            type-name]}
    {:keys [alumbra/selection-set]}]
   (->> (resolve-selection-set
-         (assoc opts :scope-type type-name)
+         (set-scope-type opts type-name)
          selection-set)
        (generate-nested-selection type-description)))
 
@@ -120,7 +142,7 @@
                 alumbra/directives]}]
   (let [fragment-type-name (:alumbra/type-name type-condition)
         selection-set (resolve-selection-set
-                        (assoc opts :scope-type fragment-type-name)
+                        (set-scope-type opts fragment-type-name)
                         selection-set)
         possible-types (collect-possible-types opts fragment-type-name)]
     {:type-condition possible-types
