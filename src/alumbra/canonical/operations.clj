@@ -9,7 +9,12 @@
 (defn- root-type
   [{{:keys [schema-root]} :schema}
    {:keys [alumbra/operation-type]}]
-  (get-in schema-root [:schema-root-types operation-type]))
+  (let [operation-type (or operation-type "query")]
+    (or (get-in schema-root [:schema-root-types operation-type])
+        (throw
+          (IllegalArgumentException.
+            (format "no root defined for '%s' operations; cannot canonicalize."
+                    operation-type))))))
 
 ;; ## Operation Resolution
 
