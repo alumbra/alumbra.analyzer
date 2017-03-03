@@ -9,8 +9,9 @@
              [unions :as unions]
              [valid-fragment-spreads :as valid-fragment-spreads]]
             [alumbra.canonical
+             [variables :refer [resolve-variables]]
              [fragments :refer [resolve-fragments]]
-             [operations :refer [resolve-operation]]]
+             [operations :refer [select-operation resolve-operation]]]
             [clojure.java.io :as io]))
 
 ;; ## Base Functionality
@@ -136,11 +137,13 @@
   ([analyzed-schema document operation-name]
    (canonicalize-operation analyzed-schema document operation-name {}))
   ([analyzed-schema document operation-name variables]
-   (let [{:keys [alumbra/fragments alumbra/operations]} document]
+   (let [{:keys [alumbra/fragments alumbra/operations]} document
+         operation (select-operation operations operation-name)]
      (-> {:schema    analyzed-schema
           :variables variables}
+         (resolve-variables operation)
          (resolve-fragments fragments)
-         (resolve-operation operations operation-name)))))
+         (resolve-operation operation)))))
 
 (defn canonicalizer
   "Create a function canonicalizing GraphQL documents conforming to
