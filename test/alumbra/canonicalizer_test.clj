@@ -124,3 +124,34 @@
               randomCat(q: $q) { name }
               }"
              {"q" nil})))))
+
+(deftest t-fragment-arguments
+  (letfn [(canonicalize [query & [variables]]
+            (let [ast (ql/parse-document query)]
+              (if variables
+                (analyzer/canonicalize-operation schema ast nil variables)
+                (analyzer/canonicalize-operation schema ast))))]
+    (is (= {"q"
+            {"emotions"
+             [{:type-name "Emotion", :non-null? true, :value "HAPPY"}]}}
+           (-> (canonicalize
+                 "query ($q: CatQuery = {emotions: [HAPPY HAPPIER]}) {
+                  randomCat(q: $q) @test { name }
+                  }"
+                 {"q" {"emotions" ["HAPPY"]}})
+               :selection-set
+               first
+               :arguments)
+           (-> (canonicalize
+                 "query ($q: CatQuery = {emotions: [HAPPY HAPPIER]}) {
+                    ...F0
+                  }
+                  fragment F0 on QueryRoot @test {
+                    randomCat(q: $q) { name }
+                  }"
+                 {"q" {"emotions" ["HAPPY"]}})
+               :selection-set
+               first
+               :selection-set
+               first
+               :arguments)))))

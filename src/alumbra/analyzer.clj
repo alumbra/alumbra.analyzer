@@ -9,6 +9,7 @@
              [unions :as unions]
              [valid-fragment-spreads :as valid-fragment-spreads]]
             [alumbra.canonical
+             [variables :refer [resolve-variables]]
              [fragments :refer [resolve-fragments]]
              [operations :refer [resolve-operation]]]
             [clojure.java.io :as io]))
@@ -136,9 +137,11 @@
   ([analyzed-schema document operation-name]
    (canonicalize-operation analyzed-schema document operation-name {}))
   ([analyzed-schema document operation-name variables]
-   (let [{:keys [alumbra/fragments alumbra/operations]} document]
+   (let [{:keys [alumbra/fragments alumbra/operations]} document
+         all-op-variables (->> document :alumbra/operations (map :alumbra/variables) (reduce concat []))]
      (-> {:schema    analyzed-schema
           :variables variables}
+         (resolve-variables {:alumbra/variables all-op-variables})
          (resolve-fragments fragments)
          (resolve-operation operations operation-name)))))
 
