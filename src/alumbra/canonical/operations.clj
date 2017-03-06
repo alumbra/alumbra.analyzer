@@ -41,9 +41,7 @@
                 alumbra/directives
                 alumbra/operation-type
                 alumbra/operation-name] :as op}]
-  (let [opts (-> opts
-                 (assoc :scope-type (root-type opts op))
-                 (resolve-variables op))
+  (let [opts (-> opts (assoc :scope-type (root-type opts op)))
         selection (resolve-selection-set opts selection-set)]
     {:operation-name operation-name
      :operation-type operation-type
