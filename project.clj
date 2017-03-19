@@ -11,7 +11,7 @@
                  [com.rpl/specter "1.0.0"]]
   :profiles {:dev
              {:dependencies [[org.clojure/test.check "0.9.0"]
-                             [alumbra/parser "0.1.5"]
+                             [alumbra/parser "0.1.6"]
                              [alumbra/generators "0.2.2"]]}
              :codox
              {:plugins [[lein-codox "0.10.0"]]
