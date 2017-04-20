@@ -30,3 +30,17 @@
            (-> (get-in schema [:types "QueryRoot" :fields]) keys set)))
     (is (= "QueryRoot"
            (get-in schema [:schema-root :schema-root-types "query"])))))
+
+(deftest t-analyzer-interface-implementations
+  (let [declaration          "interface SomeInterface { x: Int }"
+        implementation       "type SomeType implements SomeInterface { x: Int }"
+        declaration-first    (analyze [declaration implementation])
+        implementation-first (analyze [implementation declaration])
+        implemented-by       #(get-in % [:interfaces "SomeInterface" :implemented-by])
+        implements           #(get-in % [:types "SomeType" :implements])]
+    (is (= (implemented-by declaration-first)
+           (implemented-by implementation-first)
+           #{"SomeType"}))
+    (is (= (implements declaration-first)
+           (implements implementation-first)
+           #{"SomeInterface"}))))
