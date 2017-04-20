@@ -40,7 +40,7 @@
                :interface (get-in schema [:interfaces scope-type])
                :union     (get-in schema [:unions scope-type])
                nil        (throw-unknown-type! scope-type)
-               (throw-illegal-type! scope-type kind))]
+               (throw-illegal-type! scope-type))]
     (get-in type [:fields field-name])))
 
 (defn- generate-nested-selection
