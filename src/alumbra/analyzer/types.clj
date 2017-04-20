@@ -51,12 +51,7 @@
         (update-in
           [:types implementing-type-name :implements]
           conj
-          type-name)
-        (contains? interfaces type-name)
-        (update-in
-          [:interfaces type-name :implemented-by]
-          conj
-          implementing-type-name)))
+          type-name)))
     data implements))
 
 ;; ## Types

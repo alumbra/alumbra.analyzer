@@ -2,6 +2,7 @@
   (:require [alumbra.analyzer
              [directives :as directives]
              [enums :as enums]
+             [implementations :as implementations]
              [kinds :as kinds]
              [scalars :as scalars]
              [schema-root :as schema-root]
@@ -29,6 +30,7 @@
         (types/analyze schema)
         (unions/analyze schema)
         (kinds/aggregate)
+        (implementations/aggregate)
         (valid-fragment-spreads/aggregate))
     schema))
 
