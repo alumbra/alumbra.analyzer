@@ -16,7 +16,7 @@
 
 (def schema
   (analyzer/analyze-schema
-    "enum Emotion { HAPPY }
+    "enum Emotion { HAPPY HAPPIER }
      input CatQuery { emotions: [Emotion!]! }
      type Person { id:ID!, name:String!, pet: Pet }
      interface Pet { id:ID!, name:String! }
@@ -124,6 +124,50 @@
               randomCat(q: $q) { name }
               }"
              {"q" nil})))))
+
+(deftest t-variable-type-mismatch
+  (letfn [(canonicalize [query variables]
+            (analyzer/canonicalize-operation
+              schema
+              (ql/parse-document query)
+              nil
+              variables))]
+    (testing "input type mismatch."
+      (is (thrown-with-msg?
+            IllegalArgumentException
+            #"does not match expected type 'CatQuery!'"
+            (canonicalize
+              "query ($q: CatQuery!) {
+               randomCat(q: $q) { name }
+               }"
+              {"q" true}))))
+    (testing "list type mismatch."
+      (is (thrown-with-msg?
+            IllegalArgumentException
+            #"does not match expected type '\[Emotion!\]'"
+            (canonicalize
+              "query ($emotions: [Emotion!]) {
+               randomCat(q: {emotions: $emotions}) { name }
+               }"
+              {"emotions" "HAPPY"}))))
+    (testing "enum type mismatch."
+      (is (thrown-with-msg?
+            IllegalArgumentException
+            #"does not match expected type 'Emotion!'"
+            (canonicalize
+              "query ($emotion: Emotion!) {
+               randomCat(q: {emotions: [$emotion]}) { name }
+               }"
+              {"emotion" "UNKNOWN"}))))
+    (testing "nullability mismatch."
+      (is (thrown-with-msg?
+            IllegalArgumentException
+            #"null value not allowed for expected type 'CatQuery!'"
+            (canonicalize
+              "query ($q: CatQuery!) {
+               randomCat(q: $q) { name }
+               }"
+              {"q" nil}))))))
 
 (deftest t-fragment-arguments
   (letfn [(canonicalize [query & [variables]]
