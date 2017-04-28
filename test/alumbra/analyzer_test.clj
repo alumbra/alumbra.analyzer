@@ -44,3 +44,22 @@
     (is (= (implements declaration-first)
            (implements implementation-first)
            #{"SomeInterface"}))))
+
+(deftest t-analyzer-valid-fragment-spreads
+  (let [schema (analyze
+                 "interface InterfaceA { id: ID! }
+                  interface InterfaceB { name: String! }
+                  interface InterfaceC { age: Int! }
+                  type Person implements InterfaceA, InterfaceB { id: ID!, name: String! }
+                  type QueryRoot { value: InterfaceA }
+                  schema { query: QueryRoot }")
+        for-interface #(get-in schema [:interfaces % :valid-fragment-spreads])
+        for-type #(get-in schema [:types % :valid-fragment-spreads])]
+    (is (not (:alumbra/parser-errors schema)))
+    (is (= #{"InterfaceC"}
+           (for-interface "InterfaceC")))
+    (is (= #{"InterfaceA" "InterfaceB" "Person"}
+           (for-interface "InterfaceA")
+           (for-interface "InterfaceB")))
+    (is (= #{"Person" "InterfaceA" "InterfaceB"}
+           (for-type "Person")))))

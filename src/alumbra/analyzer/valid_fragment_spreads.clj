@@ -8,6 +8,13 @@
          union-types)
        (into allowed-types)))
 
+(defn- add-valid-fragment-spreads-to-interface
+  [{:keys [types]} implementing-types allowed-types]
+  (->> (mapcat
+         (comp :valid-fragment-spreads types)
+         implementing-types)
+       (into allowed-types)))
+
 (defn- add-matching-unions
   [{:keys [unions]} allowed-types]
   (->> unions
@@ -26,6 +33,7 @@
        (into #{type-name})
        (add-matching-unions schema)
        (add-valid-fragment-spreads-to-union schema union-types)
+       (add-valid-fragment-spreads-to-interface schema implemented-by)
        (assoc type :valid-fragment-spreads)))
 
 (defn- add-valid-fragment-spreads
