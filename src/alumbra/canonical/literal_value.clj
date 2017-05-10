@@ -41,7 +41,8 @@
 
 (defn- resolve-enum
   [{:keys [schema]} {:keys [type-name non-null?] :as type} value]
-  (let [{:keys [enum-values]} (get-in schema [:enums type-name])]
+  (let [{:keys [enum-values]} (get-in schema [:enums type-name])
+        value (name value)]
     (assert-type
       (and enum-values (contains? enum-values value))
       type
