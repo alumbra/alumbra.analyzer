@@ -169,7 +169,7 @@
                }"
               {"q" nil}))))))
 
-(deftest t-fragment-arguments
+(deftest t-fragment-variables
   (letfn [(canonicalize [query & [variables]]
             (let [ast (ql/parse-document query)]
               (if variables
