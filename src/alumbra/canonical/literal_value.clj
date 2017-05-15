@@ -20,13 +20,13 @@
          (throw
            (IllegalArgumentException.
              (format
-               "null value not allowed for expected type '%s'."
+               "Null value not allowed for expected type '%s'."
                (type-shorthand t#)))))
        (when-not ~predicate
          (throw
            (IllegalArgumentException.
              (format
-               "value does not match expected type '%s': %s"
+               "Value does not match expected type '%s': %s"
                (type-shorthand t#)
                v#)))))))
 

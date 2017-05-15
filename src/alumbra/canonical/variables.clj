@@ -9,19 +9,26 @@
    {:keys [alumbra/variable-name
            alumbra/default-value
            alumbra/type]}]
-  (let [v (get variables variable-name ::none)
-        type (as-type-description type)]
-    (if (= v ::none)
-      (if default-value
-        (resolve-value opts type default-value)
-        ::none)
-      (resolve-literal-value opts type v))))
+  (try
+    (let [v (get variables variable-name ::none)
+          type (as-type-description type)]
+      (if (= v ::none)
+        (if default-value
+          (resolve-value opts type default-value)
+          (resolve-literal-value opts type nil))
+        (resolve-literal-value opts type v)))
+    (catch IllegalArgumentException t
+      (throw
+        (IllegalArgumentException.
+          (format "Variable '$%s': %s"
+                  variable-name
+                  (.getMessage t))
+          t)))))
 
 (defn resolve-variables
   [opts {:keys [alumbra/variables]}]
   (->> (for [{:keys [alumbra/variable-name] :as variable} variables
-             :let [variable-value (resolve-variable opts variable)]
-             :when (not= variable-value ::none)]
+             :let [variable-value (resolve-variable opts variable)]]
          [variable-name variable-value])
        (into {})
        (assoc opts :variables)))

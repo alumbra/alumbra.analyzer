@@ -134,11 +134,11 @@
       (let [query "query ($q: CatQuery!) { randomCat(q: $q) { name } }"]
         (is (thrown-with-msg?
               IllegalArgumentException
-              #"null value not allowed"
+              #"Null value not allowed"
               (canonicalize query {})))
         (is (thrown-with-msg?
               IllegalArgumentException
-              #"null value not allowed"
+              #"Null value not allowed"
               (canonicalize query {"q" nil})))))))
 
 (deftest t-variable-type-mismatch
@@ -178,7 +178,7 @@
     (testing "nullability mismatch."
       (is (thrown-with-msg?
             IllegalArgumentException
-            #"null value not allowed for expected type 'CatQuery!'"
+            #"Null value not allowed for expected type 'CatQuery!'"
             (canonicalize
               "query ($q: CatQuery!) {
                randomCat(q: $q) { name }
