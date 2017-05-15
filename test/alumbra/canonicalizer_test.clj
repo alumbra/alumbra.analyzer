@@ -105,25 +105,41 @@
               (if variables
                 (analyzer/canonicalize-operation schema ast nil variables)
                 (analyzer/canonicalize-operation schema ast))))]
-    (is (= (canonicalize
-             "{ randomCat(q: {emotions: [HAPPY HAPPIER]}) { name } }")
-           (canonicalize
-             "query ($q: CatQuery!) { randomCat(q: $q) { name } }"
-             {"q" {"emotions" ["HAPPY" "HAPPIER"]}})
-           (canonicalize
-             "query ($q: CatQuery = {emotions: [HAPPY HAPPIER]}) {
+    (testing "default value."
+      (is (= (canonicalize
+               "{ randomCat(q: {emotions: [HAPPY HAPPIER]}) { name } }")
+             (canonicalize
+               "query ($q: CatQuery!) { randomCat(q: $q) { name } }"
+               {"q" {"emotions" ["HAPPY" "HAPPIER"]}})
+             (canonicalize
+               "query ($q: CatQuery = {emotions: [HAPPY HAPPIER]}) {
                 randomCat(q: $q) { name }
-              }")))
-    (is (= (canonicalize
-             "{ randomCat(q: null) { name } }")
-           (canonicalize
-             "query ($q: CatQuery) { randomCat(q: $q) { name } }"
-             {"q" nil})
-           (canonicalize
-             "query ($q: CatQuery = {emotions: [HAPPY HAPPIER]}) {
-              randomCat(q: $q) { name }
-              }"
-             {"q" nil})))))
+                }"))))
+    (testing "explicit null value."
+      (is (= (canonicalize
+               "{ randomCat(q: null) { name } }")
+             (canonicalize
+               "query ($q: CatQuery) { randomCat(q: $q) { name } }"
+               {"q" nil})
+             (canonicalize
+               "query ($q: CatQuery = {emotions: [HAPPY HAPPIER]}) {
+                randomCat(q: $q) { name }
+                }"
+               {"q" nil}))))
+    (testing "nullable variable."
+      (let [query "query ($q: CatQuery) { randomCat(q: $q) { name } }"]
+        (is (= (canonicalize query {})
+               (canonicalize query {"q" nil})))))
+    (testing "non-nullable variable."
+      (let [query "query ($q: CatQuery!) { randomCat(q: $q) { name } }"]
+        (is (thrown-with-msg?
+              IllegalArgumentException
+              #"null value not allowed"
+              (canonicalize query {})))
+        (is (thrown-with-msg?
+              IllegalArgumentException
+              #"null value not allowed"
+              (canonicalize query {"q" nil})))))))
 
 (deftest t-variable-type-mismatch
   (letfn [(canonicalize [query variables]
