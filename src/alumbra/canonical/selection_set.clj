@@ -50,6 +50,7 @@
    selection]
   (if type-name
     {:field-type    :object
+     :type-name     type-name
      :non-null?     non-null?
      :selection-set selection}
     {:field-type :list
