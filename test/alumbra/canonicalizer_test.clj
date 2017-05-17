@@ -17,7 +17,7 @@
 (def schema
   (analyzer/analyze-schema
     "enum Emotion { HAPPY HAPPIER }
-     input CatQuery { emotions: [Emotion!]! }
+     input CatQuery { emotions: [Emotion!]!, singleEmotion: Emotion }
      type Person { id:ID!, name:String!, pet: Pet }
      interface Pet { id:ID!, name:String! }
      type Cat implements Pet { id:ID!, name:String!, meows: Boolean }
@@ -128,6 +128,10 @@
                {"q" nil}))))
     (testing "nullable variable."
       (let [query "query ($q: CatQuery) { randomCat(q: $q) { name } }"]
+        (is (= (canonicalize query {})
+               (canonicalize query {"q" nil})))))
+    (testing "nullable enum."
+      (let [query "query ($e: Emotion) { randomCat(q: {emotion: $e}) { name } }"]
         (is (= (canonicalize query {})
                (canonicalize query {"q" nil})))))
     (testing "non-nullable variable."
